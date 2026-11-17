@@ -1,16 +1,24 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { apparentSolarTime, equationOfTime, lmt, zoneTime } from '../time-engine';
-  import { formatEquationOfTime, formatLongitude, formatWallTime, wallTimeAttribute } from './format';
+  import {
+    formatAccuracy,
+    formatEquationOfTime,
+    formatLongitude,
+    formatWallTime,
+    wallTimeAttribute,
+  } from './format';
   import { loadMode, saveMode, type ClockMode } from './mode';
   import { startTicker } from './ticker';
 
   interface Props {
     /** Degrees, east positive, within [-180, 180]. */
     longitude: number;
+    /** Radius in meters that the browser reports for the position, when it reports one. */
+    accuracy?: number;
   }
 
-  const { longitude }: Props = $props();
+  const { longitude, accuracy }: Props = $props();
 
   const MODES: { value: ClockMode; label: string }[] = [
     { value: 'mean', label: 'Mean' },
@@ -82,6 +90,12 @@
       <dt class="readout__term">Longitude</dt>
       <dd class="readout__value">{formatLongitude(longitude)}</dd>
     </div>
+    {#if accuracy !== undefined}
+      <div class="readout__detail">
+        <dt class="readout__term">Accuracy</dt>
+        <dd class="readout__value">{formatAccuracy(accuracy)}</dd>
+      </div>
+    {/if}
   </dl>
 </section>
 

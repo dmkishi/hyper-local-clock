@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatEquationOfTime, formatLongitude, formatWallTime, wallTimeAttribute } from './format';
+import { formatAccuracy, formatEquationOfTime, formatLongitude, formatWallTime, wallTimeAttribute } from './format';
 
 const wall = new Date('2026-03-20T21:18:46.008Z');
 // Some locales put a narrow no-break space before AM and PM.
@@ -52,5 +52,18 @@ describe('formatLongitude', () => {
     expect(formatLongitude(139.6917)).toBe('139.6917° E');
     expect(formatLongitude(-74.006)).toBe('74.0060° W');
     expect(formatLongitude(0)).toBe('0.0000°');
+  });
+});
+
+describe('formatAccuracy', () => {
+  it('rounds to whole meters, and never to zero', () => {
+    expect(formatAccuracy(12.4)).toBe('±12 m');
+    expect(formatAccuracy(0.2)).toBe('±1 m');
+    expect(formatAccuracy(999.4)).toBe('±999 m');
+  });
+
+  it('switches to kilometers from 1 km', () => {
+    expect(formatAccuracy(999.6)).toBe('±1.0 km');
+    expect(formatAccuracy(1_540)).toBe('±1.5 km');
   });
 });
