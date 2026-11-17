@@ -1,25 +1,28 @@
-<main class="placeholder">
-  <h1 class="placeholder__title">Hyper Local Clock</h1>
-  <p class="placeholder__note">Coming soon.</p>
+<script lang="ts">
+  import ClockReadout from './clock/ClockReadout.svelte';
+
+  // Oakland (37.80947276273161, -122.24258054667955), hard-coded until the
+  // location milestone supplies a live position. Only the longitude is used.
+  const LONGITUDE = -122.24258054667955;
+</script>
+
+<main class="app">
+  <h1 class="app__title">Hyper Local Clock</h1>
+  <ClockReadout longitude={LONGITUDE} />
 </main>
 
 <style>
-  .placeholder {
+  .app {
     display: grid;
     place-content: center;
-    gap: 0.5rem;
+    justify-items: center;
+    gap: 1rem;
     min-height: 100dvh;
     padding: 1rem;
-    text-align: center;
   }
 
-  .placeholder__title {
+  .app__title {
     margin: 0;
-    font-size: 2rem;
-  }
-
-  .placeholder__note {
-    margin: 0;
-    opacity: 0.7;
+    font-size: 1.25rem;
   }
 </style>
