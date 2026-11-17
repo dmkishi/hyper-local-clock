@@ -55,7 +55,7 @@ describe('zoneTime', () => {
     const { time, zoneName, timeZone } = zoneTime(now);
     expect(timeZone).toBe(new Intl.DateTimeFormat().resolvedOptions().timeZone);
     expect(zoneName).not.toBe('');
-    expect(time.getTime() - now.getTime()).toBe(-now.getTimezoneOffset() * 60_000);
+    expect(now.getTime() - time.getTime()).toBe(now.getTimezoneOffset() * 60_000);
   });
 
   it('rejects an unknown time zone', () => {
