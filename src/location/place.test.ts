@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadPlace, savePlace, type Place } from './place';
+import { distanceMeters, loadPlace, savePlace, type Place } from './place';
 
 const KEY = 'hyper-local-clock:place';
 const OAKLAND: Place = { latitude: 37.8095, longitude: -122.2426, accuracy: 12, source: 'device' };
@@ -21,6 +21,28 @@ const blocked = (): never => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe('distanceMeters', () => {
+  it('is zero for the same position', () => {
+    expect(distanceMeters(OAKLAND, OAKLAND)).toBe(0);
+  });
+
+  it('measures a degree of latitude as about 111 km', () => {
+    expect(distanceMeters({ latitude: 0, longitude: 0 }, { latitude: 1, longitude: 0 })).toBeCloseTo(111_195, -1);
+  });
+
+  it('shrinks a degree of longitude toward the poles', () => {
+    const atEquator = distanceMeters({ latitude: 0, longitude: 0 }, { latitude: 0, longitude: 1 });
+    const at60 = distanceMeters({ latitude: 60, longitude: 0 }, { latitude: 60, longitude: 1 });
+    expect(atEquator).toBeCloseTo(111_195, -1);
+    expect(at60 / atEquator).toBeCloseTo(0.5, 5);
+  });
+
+  it('takes the short way across the date line', () => {
+    const across = distanceMeters({ latitude: 0, longitude: 179.5 }, { latitude: 0, longitude: -179.5 });
+    expect(across).toBeCloseTo(111_195, -1);
+  });
 });
 
 describe('saved place', () => {
@@ -59,6 +81,18 @@ describe('saved place', () => {
   it('drops a malformed accuracy but keeps the place', () => {
     stubStorage({ [KEY]: '{"latitude":37.8,"longitude":10,"accuracy":-5,"source":"device"}' });
     expect(loadPlace()).toEqual({ latitude: 37.8, longitude: 10, source: 'device' });
+  });
+
+  it('keeps the name a geocoder gave the place', () => {
+    stubStorage();
+    const named: Place = { ...OAKLAND, name: 'Lakeshore, Oakland' };
+    savePlace(named);
+    expect(loadPlace()).toEqual(named);
+  });
+
+  it('drops a malformed name but keeps the place', () => {
+    stubStorage({ [KEY]: '{"latitude":37.8,"longitude":10,"name":7,"source":"picked"}' });
+    expect(loadPlace()).toEqual({ latitude: 37.8, longitude: 10, source: 'picked' });
   });
 
   it('does nothing when storage is blocked', () => {
