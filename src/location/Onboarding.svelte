@@ -52,7 +52,7 @@
 
   .onboarding__button {
     padding: 0.625rem 1rem;
-    border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+    border: 1px solid var(--border-control);
     border-radius: 0.5rem;
     background: Canvas;
     color: CanvasText;
@@ -73,7 +73,7 @@
   }
 
   .onboarding__button:focus-visible {
-    outline: 2px solid Highlight;
+    outline: var(--focus-ring);
     outline-offset: 2px;
   }
 </style>

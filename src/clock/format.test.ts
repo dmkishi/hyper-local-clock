@@ -66,4 +66,12 @@ describe('formatAccuracy', () => {
     expect(formatAccuracy(999.6)).toBe('±1.0 km');
     expect(formatAccuracy(1_540)).toBe('±1.5 km');
   });
+
+  it('gives feet, then miles from 1,000 ft, in imperial units', () => {
+    expect(formatAccuracy(12.4, 'imperial')).toBe('±41 ft');
+    expect(formatAccuracy(0.1, 'imperial')).toBe('±1 ft');
+    expect(formatAccuracy(304, 'imperial')).toBe('±997 ft');
+    expect(formatAccuracy(305, 'imperial')).toBe('±0.2 mi');
+    expect(formatAccuracy(1_540, 'imperial')).toBe('±1.0 mi');
+  });
 });

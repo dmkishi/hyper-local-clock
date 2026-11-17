@@ -21,13 +21,16 @@
      * map turns this off; the owner turns it back on.
      */
     tracking: boolean;
+    /** Draw the map in its dark style. */
+    dark: boolean;
     /** A press held still on the map, in degrees. */
     onlongpress: (latitude: number, longitude: number) => void;
   }
 
-  let { place, tracking = $bindable(), onlongpress }: Props = $props();
+  let { place, tracking = $bindable(), dark, onlongpress }: Props = $props();
 
-  const STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+  const STYLES = 'https://tiles.openfreemap.org/styles';
+  const styleFor = (isDark: boolean): string => `${STYLES}/${isDark ? 'dark' : 'liberty'}`;
   /** Close enough to read street names around the place. */
   const PLACE_ZOOM = 13;
   const WORLD_ZOOM = 1;
@@ -38,6 +41,8 @@
   let map = $state.raw<MapLibreMap>();
   let marker = $state.raw<Marker>();
   let failed = $state(false);
+  /** Whether the style the map last loaded is the dark one. */
+  let styledDark: boolean | undefined;
 
   onMount(() => {
     let stopLongPress: (() => void) | undefined;
@@ -56,7 +61,7 @@
 
       const created = new maplibre.Map({
         container,
-        style: STYLE,
+        style: styleFor(dark),
         center: place ? [place.longitude, place.latitude] : [0, 20],
         zoom: place ? PLACE_ZOOM : WORLD_ZOOM,
         // The map stays north-up and flat: one less thing to get lost in.
@@ -76,6 +81,7 @@
         onlongpress(lat, ((((lng + 180) % 360) + 360) % 360) - 180);
       });
 
+      styledDark = dark;
       marker = new maplibre.Marker();
       map = created;
     };
@@ -89,6 +95,12 @@
       stopLongPress?.();
       map?.remove();
     };
+  });
+
+  $effect(() => {
+    if (!map || dark === styledDark) return;
+    styledDark = dark;
+    map.setStyle(styleFor(dark));
   });
 
   $effect(() => {

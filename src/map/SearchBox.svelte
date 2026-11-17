@@ -143,7 +143,7 @@
     box-sizing: border-box;
     width: 100%;
     margin: 0;
-    border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+    border: 1px solid var(--border-control);
     border-radius: 0.5rem;
     background: Canvas;
     color: CanvasText;
@@ -157,8 +157,14 @@
     font-size: 1rem;
   }
 
+  /* Browsers' own placeholder gray can fall short of 4.5:1. */
+  .search__input::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+
   .search__input:focus-visible {
-    outline: 2px solid Highlight;
+    outline: var(--focus-ring);
     outline-offset: 2px;
   }
 
@@ -180,8 +186,8 @@
   }
 
   .search__detail {
+    color: var(--text-muted);
     font-size: 0.8125rem;
-    opacity: 0.75;
   }
 
   .search__message {

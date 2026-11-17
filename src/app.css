@@ -2,8 +2,39 @@
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
   line-height: 1.5;
+
+  /* Edges that only decorate, such as the frame around the readout. */
+  --border: color-mix(in srgb, CanvasText 20%, transparent);
+  /* Edges that mark out a control, which need 3:1 against the page (WCAG 1.4.11). */
+  --border-control: color-mix(in srgb, CanvasText 55%, transparent);
+  /* Secondary text, still above 4.5:1 against the page (WCAG 1.4.3). */
+  --text-muted: color-mix(in srgb, CanvasText 75%, transparent);
+  /* The system highlight color can be too pale to see against the page. */
+  --focus-ring: 2px solid CanvasText;
+}
+
+/* A choice in Settings overrides the device's light or dark mode. */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
+  background: Canvas;
+  color: CanvasText;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

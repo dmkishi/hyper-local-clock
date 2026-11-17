@@ -2,11 +2,15 @@
   import { onMount } from 'svelte';
   import ClockReadout from './clock/ClockReadout.svelte';
   import { geocoder, type GeocoderResult } from './geocoding';
+  import HelpModal from './help/HelpModal.svelte';
   import Onboarding from './location/Onboarding.svelte';
   import { distanceMeters, loadPlace, savePlace, type Place } from './location/place';
   import { locationGranted, startWatcher, type WatchFailure } from './location/watcher';
   import MapView from './map/MapView.svelte';
   import SearchBox from './map/SearchBox.svelte';
+  import { saveSettings } from './settings/settings';
+  import SettingsModal from './settings/SettingsModal.svelte';
+  import { isDark, settings } from './settings/state.svelte';
 
   const NOTICES: Record<WatchFailure, string> = {
     denied: 'Location access is off for this site. Search for a place or long press the map to set one.',
@@ -29,6 +33,8 @@
   /** True while the map keeps the place centered. Dragging the map turns it off. */
   let tracking = $state(true);
   let notice = $state<string>();
+  let settingsOpen = $state(false);
+  let helpOpen = $state(false);
 
   let stopWatcher: (() => void) | undefined;
   /** The position the place's name was last looked up for. */
@@ -139,6 +145,16 @@
     return place?.source === 'picked' ? 'Showing the place you set' : 'Showing your last place';
   });
 
+  $effect(() => {
+    saveSettings(settings);
+  });
+
+  $effect(() => {
+    // No attribute leaves light or dark to the device.
+    if (settings.theme === 'system') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = settings.theme;
+  });
+
   onMount(() => {
     // Resume following without a tap only when it cannot raise a permission
     // prompt, and only when the user was following on the last visit.
@@ -162,19 +178,19 @@
 {:else}
   <main class="app app--map">
     <div class="app__map">
-      <MapView {place} bind:tracking onlongpress={pickPosition} />
+      <MapView {place} bind:tracking dark={isDark()} onlongpress={pickPosition} />
       <div class="app__search">
         <SearchBox onpick={pickResult} />
       </div>
       <button
-        class="app__locate"
+        class="app__button app__button--locate"
         type="button"
         aria-label="Go to my location"
         title="Go to my location"
         aria-pressed={following && tracking}
         onclick={follow}
       >
-        <svg class="app__locate-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="app__icon" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="7" />
           <circle class="app__locate-dot" cx="12" cy="12" r="3" />
           <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
@@ -183,7 +199,41 @@
     </div>
 
     <div class="app__panel">
-      <h1 class="app__title">Hyper Local Clock</h1>
+      <header class="app__header">
+        <h1 class="app__title">Hyper Local Clock</h1>
+        <div class="app__actions">
+          <button
+            class="app__button"
+            type="button"
+            aria-label="Help"
+            title="Help"
+            onclick={() => {
+              helpOpen = true;
+            }}
+          >
+            <svg class="app__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.25 9.25a2.75 2.75 0 1 1 4.1 2.4c-.85.5-1.35 1.1-1.35 2.1" />
+              <path d="M12 17.25v.01" />
+            </svg>
+          </button>
+          <button
+            class="app__button"
+            type="button"
+            aria-label="Settings"
+            title="Settings"
+            onclick={() => {
+              settingsOpen = true;
+            }}
+          >
+            <svg class="app__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 7h9M18 7h3M3 17h3M12 17h9" />
+              <circle cx="15" cy="7" r="3" />
+              <circle cx="9" cy="17" r="3" />
+            </svg>
+          </button>
+        </div>
+      </header>
       {#if notice}
         <p class="app__notice" role="status">{notice}</p>
       {/if}
@@ -202,6 +252,8 @@
       {/if}
     </div>
   </main>
+  <SettingsModal bind:open={settingsOpen} />
+  <HelpModal bind:open={helpOpen} />
 {/if}
 
 <style>
@@ -237,29 +289,37 @@
     max-width: 24rem;
   }
 
-  .app__locate {
-    position: absolute;
-    /* Clear of the map's attribution button in the corner below. */
-    inset: auto 0.75rem 3rem auto;
+  .app__button {
     display: grid;
+    flex: none;
     place-content: center;
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
-    border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+    border: 1px solid var(--border-control);
     border-radius: 50%;
     background: Canvas;
     color: CanvasText;
-    box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
     cursor: pointer;
   }
 
-  .app__locate:focus-visible {
-    outline: 2px solid Highlight;
+  .app__button:hover {
+    background: color-mix(in srgb, CanvasText 12%, Canvas);
+  }
+
+  .app__button:focus-visible {
+    outline: var(--focus-ring);
     outline-offset: 2px;
   }
 
-  .app__locate-icon {
+  .app__button--locate {
+    position: absolute;
+    /* Clear of the map's attribution button in the corner below. */
+    inset: auto 0.75rem 3rem auto;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
+  }
+
+  .app__icon {
     width: 1.5rem;
     height: 1.5rem;
     fill: none;
@@ -273,17 +333,38 @@
     stroke: none;
   }
 
-  .app__locate[aria-pressed='true'] .app__locate-dot {
+  .app__button[aria-pressed='true'] .app__locate-dot {
     fill: currentColor;
   }
 
   .app__panel {
     display: grid;
     justify-items: center;
+    /* One column no wider than the panel, so nothing in it can spill off screen. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.5rem;
+    box-sizing: border-box;
+    /* Under large text the panel scrolls before it squeezes the map out. */
+    max-height: 60dvh;
     padding: 0.75rem 1rem;
     /* Keeps the clock above the home indicator on a phone. */
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
+  .app__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    box-sizing: border-box;
+    width: min(100%, 20rem);
+  }
+
+  .app__actions {
+    display: flex;
+    gap: 0.5rem;
   }
 
   .app__title {
@@ -300,7 +381,7 @@
     width: min(100%, 24rem);
     margin: 0;
     padding: 0.5rem 0.75rem;
-    border: 1px solid color-mix(in srgb, CanvasText 40%, transparent);
+    border: 1px solid var(--border-control);
     border-radius: 0.5rem;
     font-size: 0.875rem;
   }
@@ -315,7 +396,7 @@
   }
 
   .app__status > :not(.app__place) {
-    opacity: 0.75;
+    color: var(--text-muted);
   }
 
   .app__hint {
@@ -323,14 +404,31 @@
     padding-block: 1rem;
   }
 
-  @media (min-width: 48rem) {
+  /*
+    Beside the map on a tablet or desktop, and on a phone held sideways, where
+    a panel along the bottom would leave the map a sliver.
+  */
+  @media (min-width: 48rem), (orientation: landscape) and (max-height: 30rem) {
     .app--map {
-      grid-template-rows: none;
-      grid-template-columns: minmax(0, 1fr) 24rem;
+      grid-template-rows: minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) minmax(17rem, 38%);
     }
 
     .app__panel {
-      align-content: center;
+      align-content: safe center;
+      max-height: none;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .app--map {
+      grid-template-columns: minmax(0, 1fr) 22rem;
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .app--map {
+      grid-template-columns: minmax(0, 1fr) 26rem;
     }
   }
 </style>

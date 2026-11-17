@@ -46,8 +46,18 @@ export function formatLongitude(longitude: number): string {
   return `${Math.abs(longitude).toFixed(4)}°${hemisphere}`;
 }
 
-/** Formats the radius of a position fix, given in meters, as for example "±12 m" or "±1.5 km". */
-export function formatAccuracy(meters: number): string {
+const FEET_PER_METER = 3.2808;
+const FEET_PER_MILE = 5_280;
+
+/**
+ * Formats the radius of a position fix, given in meters, as for example
+ * "±12 m" or "±1.5 km", or in imperial units "±40 ft" or "±0.9 mi".
+ */
+export function formatAccuracy(meters: number, units: 'metric' | 'imperial' = 'metric'): string {
+  if (units === 'imperial') {
+    const feet = Math.max(1, Math.round(meters * FEET_PER_METER));
+    return feet < 1_000 ? `±${feet} ft` : `±${(feet / FEET_PER_MILE).toFixed(1)} mi`;
+  }
   const rounded = Math.max(1, Math.round(meters));
   return rounded < 1_000 ? `±${rounded} m` : `±${(rounded / 1_000).toFixed(1)} km`;
 }
